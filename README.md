@@ -1,2 +1,2 @@
 # bonsai-bot
-placeholder
+Simple discord bot
