@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 import discord
 
+
 # Getting environmental variables
 PROMPT = os.getenv('PROMPT') # defaults to '!'
 TOKEN = os.getenv('TOKEN')
@@ -21,6 +22,7 @@ if LOG_LEVEL == 'DEBUG':
     LOG_LEVEL = logging.DEBUG
 else:
     LOG_LEVEL = logging.INFO
+
 
 # Setting up logging
 info_format = '[{asctime}] [{levelname:<8}] {name}: {message}'
@@ -41,25 +43,50 @@ logger.setLevel(LOG_LEVEL)
 logger.addHandler(handler)
 
 
-def main():
-    intents = discord.Intents.default()
-    intents.message_content = True
+# Setting up intents
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+intents.guild_messages = True
+intents.guild_reactions = True
+#intents.guilds = True
 
-    client = discord.Client(intents=intents)
 
-    @client.event
-    async def on_ready():
-        print(f'Logged in as {client.user}')
+# Instantiating the client
+client = discord.Client(intents=intents)
 
-    @client.event
-    async def on_message(message):
-        if message.author == client.user:
-            return
 
-        if message.content.startswith(PROMPT):
-            await message.channel.send('Hello!')
+# Subscribing to events
+@client.event
+async def on_ready():
+    print(f'Logged in as {client.user}')
 
-    client.run(TOKEN, log_handler=None)
+@client.event
+async def on_message(message):
+    # Ignoring bot's own messages
+    if message.author == client.user:
+        return
 
+@client.event
+async def on_member_join():
+    pass
+
+@client.event
+async def on_member_remove():
+    pass
+
+@client.event
+async def on_raw_reaction_add():
+    pass
+
+@client.event
+async def on_raw_reaction_remove():
+    pass
+
+@client.event
+async def on_raw_reaction_clear():
+    pass
+
+# Making sure the script is not being run as module
 if __name__ == "__main__":
-    main()
+    client.run(TOKEN, log_handler=None)
