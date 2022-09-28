@@ -23,7 +23,6 @@ if LOG_LEVEL == 'DEBUG':
 else:
     LOG_LEVEL = logging.INFO
 
-
 # Setting up logging
 info_format = '[{asctime}] [{levelname:<8}] {name}: {message}'
 date_format = '%Y-%m-%d %H:%M:%S'
@@ -42,19 +41,15 @@ logger = logging.getLogger('discord')
 logger.setLevel(LOG_LEVEL)
 logger.addHandler(handler)
 
-
 # Setting up intents
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 intents.guild_messages = True
 intents.guild_reactions = True
-#intents.guilds = True
-
 
 # Instantiating the client
 client = discord.Client(intents=intents)
-
 
 # Subscribing to events
 @client.event
