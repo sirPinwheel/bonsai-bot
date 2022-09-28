@@ -5,23 +5,34 @@ import sys
 import logging
 import logging.handlers
 import discord
+import database
 
+# Making sure the script is not being run as module
+if __name__ != "__main__":
+    sys.exit('This script cannot be run as amodule, exitting...')
 
 # Getting environmental variables
-PROMPT = os.getenv('PROMPT') # defaults to '!'
+PROMPT = os.getenv('PROMPT')
+DB_FILE = os.getenv('DB_FILE')
 TOKEN = os.getenv('TOKEN')
 LOG_LEVEL = os.getenv('LOG_LEVEL')
 
 if PROMPT is None:
     PROMPT = '!'
 
+if DB_FILE is None:
+    DB_FILE = 'data.json'
+
 if TOKEN is None:
-    sys.exit('No token provided in environmental variables')
+    sys.exit('No token provided in environmental variables, exitting...')
 
 if LOG_LEVEL == 'DEBUG':
     LOG_LEVEL = logging.DEBUG
 else:
     LOG_LEVEL = logging.INFO
+
+# Instantiating the data store
+db = database.Database(DB_FILE)
 
 # Setting up logging
 info_format = '[{asctime}] [{levelname:<8}] {name}: {message}'
@@ -61,6 +72,8 @@ async def on_message(message):
     # Ignoring bot's own messages
     if message.author == client.user:
         return
+    
+    # TODO: manage discord tui
 
 @client.event
 async def on_member_join():
@@ -82,6 +95,5 @@ async def on_raw_reaction_remove():
 async def on_raw_reaction_clear():
     pass
 
-# Making sure the script is not being run as module
-if __name__ == "__main__":
-    client.run(TOKEN, log_handler=None)
+# Running the client
+client.run(TOKEN, log_handler=None)
