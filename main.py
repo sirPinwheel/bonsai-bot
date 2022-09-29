@@ -84,33 +84,33 @@ logger.addHandler(handler)
 
 # Subscribing to events
 @client.event
-async def on_ready():
+async def on_ready() -> None:
     print(f'Logged in as {client.user}')
 
 @client.event
-async def on_message(message):
+async def on_message(message) -> None:
     cp.process(message)
 
 @client.event
-async def on_raw_reaction_add():
+async def on_raw_reaction_add() -> None:
     pass
     # TODO: parse db.get() dict to check if user should get
     #       a role assigned based on the added reaction
 
 @client.event
-async def on_raw_reaction_remove():
+async def on_raw_reaction_remove() -> None:
     pass
     # TODO: parse db.get() dict to check if user should get
     #       a role removed based on the removed reaction
 
 @client.event
-async def on_raw_reaction_clear():
+async def on_raw_reaction_clear() -> None:
     pass
     # TODO: parse db.get() dict to check if users should get
     #       their roles removed based on the removed reactions
 
 @client.event
-async def startup_reaction_check():
+async def startup_reaction_check() -> None:
     pass
     # TODO: perform a check to see if reactions changed while
     #       the program was offline, then correct difeerences

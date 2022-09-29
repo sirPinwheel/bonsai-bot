@@ -1,3 +1,4 @@
+from dis import disco
 from xmlrpc.client import Boolean
 import discord
 import database
@@ -10,19 +11,19 @@ class CommandParser():
         self.prompt: str = prompt
         self.client: discord.Client = client
 
-    def is_admin_user(self, user) -> bool:
+    def is_admin_user(self, user: discord.User) -> bool:
         for role in user.roles:
             if role in self.amdin_roles:
                 return True
         return False
 
-    def parse_command(self, message) -> None:
+    def parse_command(self, message: discord.Message) -> None:
         pass
 
-    def parse_message(self, message) -> None:
+    def parse_message(self, message: discord.Message) -> None:
         pass
 
-    def process(self, message) -> None:
+    def process(self, message: discord.Message) -> None:
         # Ignoring bot's own messages
         if message.author == self.client.user:
             return
