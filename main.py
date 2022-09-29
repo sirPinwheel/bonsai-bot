@@ -13,35 +13,61 @@ if __name__ != "__main__":
     sys.exit('This script cannot be run as amodule, exitting...')
 
 # Getting environmental variables
-TOKEN = os.getenv('TOKEN')
-CLI_CHANNEL = os.getenv('CLI_CHANNEL')
-ADMIN_ROLES = os.getenv('ADMIN_ROLES')
-PROMPT = os.getenv('PROMPT')
-DB_FILE = os.getenv('DB_FILE')
-LOG_LEVEL = os.getenv('LOG_LEVEL')
+TOKEN: str | None = os.getenv('TOKEN')
+CLI_CHANNEL: str | None = os.getenv('CLI_CHANNEL')
+ADMIN_ROLES: list[str] | None = os.getenv('ADMIN_ROLES').split()
+PROMPT: str | None = os.getenv('PROMPT')
+DB_FILE: str | None = os.getenv('DB_FILE')
+LOG_LEVEL: str | None = os.getenv('LOG_LEVEL')
 
 if TOKEN is None:
     sys.exit('No token provided in environmental variables, exitting...')
+
 if CLI_CHANNEL is None:
     sys.exit('No cli channel provided in environmental variables, exitting...')
+
 if ADMIN_ROLES is None:
     ADMIN_ROLES = []
     print('No admin role defined in environmental variables, commands requiring privelaged access will not work')
-if PROMPT is None: PROMPT = '!'
-if DB_FILE is None: DB_FILE = 'data.json'
-if LOG_LEVEL == 'DEBUG': LOG_LEVEL = logging.DEBUG
-else: LOG_LEVEL = logging.INFO
+
+if PROMPT is None:
+    PROMPT = '!'
+
+if DB_FILE is None:
+    DB_FILE = 'data.json'
+
+if LOG_LEVEL == 'DEBUG':
+    LOG_LEVEL = logging.DEBUG
+else:
+    LOG_LEVEL = logging.INFO
+
+# Setting up intents
+intents = discord.Intents.default()
+intents.members = True
+intents.message_content = True
+intents.guild_messages = True
+intents.guild_reactions = True
+
+# Instantiating the client
+client = discord.Client(intents=intents)
 
 # Instantiating the data store
 db = database.Database(DB_FILE)
 
-# Instantiating the cli handler/parser
-cp = CommandParser() #CLI_CHANNEL)
+# Instantiating the command handler/parser
+cp = CommandParser(
+    TOKEN,
+    CLI_CHANNEL,
+    ADMIN_ROLES,
+    PROMPT,
+    client)
 
 # Setting up logging
-info_format = '[{asctime}] [{levelname:<8}] {name}: {message}'
-date_format = '%Y-%m-%d %H:%M:%S'
-formatter = logging.Formatter(info_format, date_format, style='{')
+formatter = logging.Formatter(
+    '[{asctime}] [{levelname:<8}] {name}: {message}',
+    '%Y-%m-%d %H:%M:%S',
+    style='{'
+)
 
 handler = logging.handlers.RotatingFileHandler(
     filename='log/debug.log',
@@ -56,22 +82,6 @@ logger = logging.getLogger('discord')
 logger.setLevel(LOG_LEVEL)
 logger.addHandler(handler)
 
-# Setting up intents
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
-intents.guild_messages = True
-intents.guild_reactions = True
-
-# Instantiating the client
-client = discord.Client(intents=intents)
-
-def is_admin_user(user):
-    for role in user.roles:
-        if role in ADMIN_ROLES:
-            return True
-    return False
-
 # Subscribing to events
 @client.event
 async def on_ready():
@@ -79,17 +89,7 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    # Ignoring bot's own messages
-    if message.author == client.user:
-        return
-    # Checking if message comes from cli channel
-    if message.channel == CLI_CHANNEL:
-        # Checking if it's from a privelaged user
-        if is_admin_user(message.author):
-            cp.parse_message(message)
-            cp.parse_command(message)
-    else:
-        cp.parse_message(message)
+    cp.process(message)
 
 @client.event
 async def on_raw_reaction_add():
