@@ -131,3 +131,5 @@ dmypy.json
 # Project specific
 log/
 db.json
+data.json
+run.sh
