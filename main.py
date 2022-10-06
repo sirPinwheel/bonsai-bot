@@ -58,11 +58,12 @@ else:
     LOG_LEVEL = logging.INFO
 
 # Setting up intents
-intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
-intents.guild_messages = True
-intents.guild_reactions = True
+#intents = discord.Intents.default()
+intents = discord.Intents.all()
+#intents.members = True
+#intents.message_content = True
+#intents.guild_messages = True
+#intents.guild_reactions = True
 
 # Instantiating the client
 client = discord.Client(intents=intents)
@@ -107,55 +108,41 @@ async def on_ready() -> None:
     await startup_reaction_check()
 
 @client.event
-async def on_message(message) -> None:
+async def on_message(message: discord.Message) -> None:
     await cp.process(message)
 
 @client.event
-async def on_raw_reaction_add() -> None:
-    pass
-    # TODO: parse db.get() dict to check if user should get
-    #       a role assigned based on the added reaction
+async def on_raw_reaction_add(payload: discord.RawReactionActionEvent) -> None:
+    await reaction_change(payload)
 
 @client.event
-async def on_raw_reaction_remove() -> None:
-    pass
-    # TODO: parse db.get() dict to check if user should get
-    #       a role removed based on the removed reaction
+async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent) -> None:
+    await reaction_change(payload)
 
 @client.event
-async def on_raw_reaction_clear() -> None:
-    pass
-    # TODO: parse db.get() dict to check if users should get
-    #       their roles removed based on the removed reactions
+async def on_raw_reaction_clear(payload: discord.RawReactionClearEvent) -> None:
+    message = payload.message_id
+    # TODO: finish this
 
-@client.event
+async def reaction_change(payload: discord.RawReactionActionEvent):
+    binds: Dict[str, str] = db.get()
+
+    if payload.emoji.name.encode('unicode-escape') in [x.encode('unicode-escape') for x in binds]:
+        user_obj: discord.Member = discord.utils. find(lambda m: m.id == payload.user_id, client.guilds[0].members)
+        role_obj: discord.Role = discord.utils.get(client.guilds[0].roles, name=binds[payload.emoji.name])
+    else:
+        return
+
+    if payload.event_type == "REACTION_ADD":
+        await user_obj.add_roles(role_obj)
+
+    elif payload.event_type == "REACTION_REMOVE":
+        await user_obj.remove_roles(role_obj, atomic=True)
+    else:
+        raise ValueError("wrong value in event_type in reaction payload")
+
 async def startup_reaction_check() -> None:
     pass
-    # TODO: perform a check to see if reactions changed while
-    #       the program was offline, then correct difeerences
-    #       using current reaction state as a base
-
-    #async def check_reactions(self) -> None:
-    #    checked_users = set()
-    #
-    #    channel = self.guilds[0].get_channel(REACTION_CHANNEL_ID)
-    #    if channel == None: sys.exit("Channel could not be found, check settings.py")
-    #
-    #    try: message = await channel.fetch_message(REACTION_MESSAGE_ID)
-    #    except discord.errors.NotFound: sys.exit("Message with reactions not found, check settings.py")
-    #    except discord.errors.Forbidden: sys.exit("Bot needs permission to read message history")
-    #    except discord.errors.HTTPException: sys.exit("Reading reaction message failed")
-    #
-    #    for reaction in message.reactions:
-    #        emoji = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
-    #        async for user in reaction.users():
-    #            await self.grant_role((REACTION_MESSAGE_ID, user.id, emoji))
-    #            checked_users.add(user)
-    #
-    #    to_check = set(self.guilds[0].members).difference(checked_users)
-    #
-    #    for user in to_check:
-    #        for match in REACTION_MATCH: await self.remove_role((REACTION_MESSAGE_ID, user.id, match))
 
 # Running the client
 client.run(TOKEN, log_handler=None)
