@@ -121,20 +121,37 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent) -> Non
 
 @client.event
 async def on_raw_reaction_clear(payload: discord.RawReactionClearEvent) -> None:
-    message = payload.message_id
-    # TODO: finish this
+    pass
+    # non-working yet
+    #if str(payload.message_id) != REACTION_MESSAGE:
+    #    return
+    #
+    #binds: Dict[str, str] = db.get()
+    #
+    #async for member in client.guilds[0].fetch_members(limit=None):
+    #    roles_to_remove: List[discord.Role] = []
+    #
+    #    for member_role in member.roles:
+    #        for emote in binds:
+    #            if binds[emote] in member_role.name:
+    #                roles_to_remove.append(member_role)
+    #
+    #    await member.remove_roles(*roles_to_remove, atomic=True)
 
 async def reaction_change(payload: discord.RawReactionActionEvent):
+    if str(payload.message_id) != REACTION_MESSAGE:
+        return
+
     binds: Dict[str, str] = db.get()
 
     if payload.emoji.name.encode('unicode-escape') in [x.encode('unicode-escape') for x in binds]:
-        user_obj: discord.Member = discord.utils. find(lambda m: m.id == payload.user_id, client.guilds[0].members)
+        user_obj: discord.Member = discord.utils.find(lambda m: m.id == payload.user_id, client.guilds[0].members)
         role_obj: discord.Role = discord.utils.get(client.guilds[0].roles, name=binds[payload.emoji.name])
     else:
         return
 
     if payload.event_type == "REACTION_ADD":
-        await user_obj.add_roles(role_obj)
+        await user_obj.add_roles(role_obj, atomic=True)
 
     elif payload.event_type == "REACTION_REMOVE":
         await user_obj.remove_roles(role_obj, atomic=True)
@@ -142,6 +159,7 @@ async def reaction_change(payload: discord.RawReactionActionEvent):
         raise ValueError("wrong value in event_type in reaction payload")
 
 async def startup_reaction_check() -> None:
+    #TODO
     pass
 
 # Running the client
